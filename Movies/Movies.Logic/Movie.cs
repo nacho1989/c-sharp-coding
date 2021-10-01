@@ -1,23 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace Movies.Logic
 {
+    [BsonIgnoreExtraElements]
     public class Movie
     {
         //create an int id property
-        public int Id { get; set; }
+        [BsonElement("movie_id")]
+        public int MovieId { get; set; }
 
         //create a int price property
-        public double Price { get; set; } 
+        [BsonElement("movie_price")]
+        public int Price { get; set; }
 
         //create string title property
+        [BsonElement("movie_title")]
         public string MovieTitle { get; set; }
 
+        [BsonElement("movie_rating")]
         public string Rating { get; set; }
 
+        [BsonElement("movie_director")]
+        public string MovieDirector { get; set; }
+
+        [BsonElement("movie_starring")]
+        public string[] MovieStarring { get; set; }
+
         //create an  string array of movie times
-        public string[] MovieTimes { get; set; } = new string[] { "10:00 PM", "00:00 AM", "2:00 AM" };
+        [BsonElement("movie_times")]
+        public string[] MovieTimes { get; set; } = new string[] { "08:00 PM", "10:00 PM", "00:00 AM" };
     }
 }

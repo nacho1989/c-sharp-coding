@@ -1,87 +1,60 @@
-﻿using System;
+﻿using MongoDB.Driver;
+using System;
 
 namespace Movies.Logic
 {
     public class MoviesDB
     {
+        private MongoClient _mongoClient;
+
+        public MoviesDB()
+        {
+            _mongoClient = new MongoClient("mongodb://localhost:27017");
+        }
+
         public Movie[] ShowMoview()
         {
-            //create an array of movies to hold 5 items
-            var list = new Movie[5];
-
-            var movie1 = new Movie
-            {
-                MovieTimes = new string[] { "10:00 PM", "00:00 AM", "2:00 AM" },
-                MovieTitle = "The Thing",
-                Price = 8.17,
-                Id = 1012,
-                Rating = "PG-13"
-            };
-            var movie2 = new Movie
-            {
-                MovieTimes = new string[] { "10:00 PM", "00:00 AM", "2:00 AM" },
-                MovieTitle = "Riddick",
-                Price = 12.88,
-                Id = 1013,
-                Rating = "G"
-            };
-            var movie3 = new Movie
-            {
-                MovieTimes = new string[] { "10:00 PM", "00:00 AM", "2:00 AM" },
-                MovieTitle = "Mission Impossible",
-                Price = 10.54,
-                Id = 1014,
-                Rating = "PG"
-            };
-            var movie4 = new Movie
-            {
-                MovieTimes = new string[] { "10:00 PM", "00:00 AM", "2:00 AM" },
-                MovieTitle = "Nightmare on Elm Street",
-                Price = 15.09,
-                Id = 1015,
-                Rating = "NC-17"
-            };
-            var movie5 = new Movie
-            {
-                MovieTimes = new string[] { "10:00 PM", "00:00 AM", "2:00 AM" },
-                MovieTitle = "Batman Returns",
-                Price = 7.50,
-                Id = 1016,
-                Rating = "R"
-            };
-
-            //add movies to array slots
-            list[0] = movie1;
-            list[1] = movie2;
-            list[2] = movie3;
-            list[3] = movie4;
-            list[4] = movie5;
-
-            
-            return list;
+            var database = _mongoClient.GetDatabase("moviesdb");
+            var collection = database.GetCollection<Movie>("movies");
+            var list = collection.Find(x => true);
+            return list.ToList().ToArray();
         }
 
-        public static void DisplayMenu()
+        public MovieTicket ProcessTicket(Movie movie, string timeSelected, string firstName, string lastName, string customerEmail, long customerPhone)
         {
-            Console.Clear();
-        }
+            MovieTicket t = new MovieTicket
+            {
+                SelectedMovieTitle = movie.MovieTitle,
+                MoviePrice = movie.Price,
+                MovieTime = timeSelected,
+                MovieId = movie.MovieId,
+                MovieRating = movie.Rating,
+                MovieDirector = movie.MovieDirector,
+                MovieStarring = movie.MovieStarring,
+                CustomerFirstName = firstName,
+                CustomerLastName = lastName,
+                CustomerEmail = customerEmail,
+                CustomerPhone = customerPhone,
+                
+            };
 
-        public MovieTicket ProcessTicket(Movie movie, string timeSelected, string firstName, string lastName, string phone)
-        {
-            //use the selected movie information to create a new movie ticket object
-            MovieTicket t = new MovieTicket();
-            t.SelectedMovieTitle = movie.MovieTitle;
-            t.Rating = movie.Rating;
-            t.MovieId = movie.Id;
-            t.MoviePrice = movie.Price;
-            t.MovieTime = timeSelected;
-            t.CustomerFirstName = firstName;
-            t.CustomerLastName = lastName;
-            t.CustomerPhone = phone;
+            var database = _mongoClient.GetDatabase("moviesdb");
+            var collection = database.GetCollection<MovieTicket>("movies_ticket");
+
+            //check if ticket that matches all params exist
+            var existingTicket = collection.Find(x => x.CustomerFirstName == t.CustomerFirstName
+            && x.CustomerLastName == t.CustomerLastName
+            && x.SelectedMovieTitle == t.SelectedMovieTitle
+            && x.MovieTime == t.MovieTime).FirstOrDefault();
+
+            //throw exception if exists
+            if (existingTicket != null)
+                throw new Exception("A ticket already exists");
+
+            collection.InsertOne(t);
+
             //return movie ticket object;
             return t;
         }
-
-        
     }
 }
